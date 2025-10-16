@@ -31,6 +31,7 @@ runs:
       - name: Build Kernel
         shell: bash
         run: |
+          set -x
           cd $GITHUB_WORKSPACE/device_kernel/
 
           # Function

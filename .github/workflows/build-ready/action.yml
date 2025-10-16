@@ -7,7 +7,11 @@ runs:
         shell: bash
         run: |
           cd $GITHUB_WORKSPACE
-          git clone --recursive "${{ env.KERNEL_SOURCE }}" -b "${{ env.KERNEL_BRANCH }}" device_kernel --depth=1
+          if [[ ! -d "device_kernel" ]]; then
+            git clone --recursive "${{ env.KERNEL_SOURCE }}" -b "${{ env.KERNEL_BRANCH }}" device_kernel --depth=1
+          else
+            echo "Directory device_kernel already exists, skipping clone"
+          fi
 
           # Get KernelSU Version and Kernel Version
 
@@ -37,11 +41,19 @@ runs:
             if [[ -d "Anykernel3" ]]; then
               echo "Found Anykernel3 in Kernel!"
             else
-              git clone "${{ env.AK3_SOURCE }}" -b "${{ env.AK3_BRANCH }}" Anykernel3 --depth=1
+              if [[ ! -d "Anykernel3" ]]; then
+                git clone "${{ env.AK3_SOURCE }}" -b "${{ env.AK3_BRANCH }}" Anykernel3 --depth=1
+              else
+                echo "Directory Anykernel3 already exists, skipping clone"
+              fi
             fi
           elif [[ "${{ env.PACK_METHOD }}" == "MKBOOTIMG" ]] || [ "${{ env.DEFCONFIG_FROM_BOOT }}" == "true" ]; then
             cd $GITHUB_WORKSPACE
-            git clone https://android.googlesource.com/platform/system/tools/mkbootimg $GITHUB_WORKSPACE/mkboottools -b main-kernel-build-2024 --depth=1
+            if [[ ! -d "$GITHUB_WORKSPACE/mkboottools" ]]; then
+              git clone https://android.googlesource.com/platform/system/tools/mkbootimg $GITHUB_WORKSPACE/mkboottools -b main-kernel-build-2024 --depth=1
+            else
+              echo "Directory mkboottools already exists, skipping clone"
+            fi
             ${{ env.CURLX }} ${{ env.BOOT_SOURCE }} $GITHUB_WORKSPACE/boot_source_${{ env.DEVICE_NAME }}.img
             cd device_kernel
           else
@@ -162,14 +174,22 @@ runs:
                 curl -sSL "https://raw.githubusercontent.com/$KERNELSU_AUTHOR/$KERNELSU_NAME/refs/heads/$KERNELSU_ORIGIN_BRANCH/kernel/setup.sh" | bash -s "$KERNELSU_BRANCH"
             elif [[ "${{ env.KERNELSU_METHOD }}" == "manual" ]]; then
                 rm -rf *KernelSU*
-                git clone "https://github.com/$KERNELSU_AUTHOR/$KERNELSU_NAME.git" -b "$KERNELSU_BRANCH" "$KERNELSU_FOLDER"
+                if [[ ! -d "$KERNELSU_FOLDER" ]]; then
+                  git clone "https://github.com/$KERNELSU_AUTHOR/$KERNELSU_NAME.git" -b "$KERNELSU_BRANCH" "$KERNELSU_FOLDER"
+                else
+                  echo "Directory $KERNELSU_FOLDER already exists, skipping clone"
+                fi
                 ln -sf "$(realpath --relative-to="$GITHUB_WORKSPACE/device_kernel/drivers" "$GITHUB_WORKSPACE/device_kernel/$KERNELSU_FOLDER/kernel")" "kernelsu"
                 grep -q "kernelsu" "$GITHUB_WORKSPACE/device_kernel/drivers/Makefile" || printf "\nobj-\$(CONFIG_KSU) += kernelsu/\n" >> $GITHUB_WORKSPACE/device_kernel/drivers/Makefile
                 grep -q "source \"drivers/kernelsu/Kconfig\"" "$GITHUB_WORKSPACE/device_kernel/drivers/Kconfig" || sed -i "/endmenu/i\source \"drivers/kernelsu/Kconfig\"" "$GITHUB_WORKSPACEdevice_kernel/drivers/Kconfig"
                 echo "KernelSU Settings done."
             elif [[ "${{ env.KERNELSU_METHOD }}" == "only" ]]; then
                 rm -rf *KernelSU*
-                git clone "https://github.com/$KERNELSU_AUTHOR/$KERNELSU_NAME.git" -b "$KERNELSU_BRANCH" "$KERNELSU_FOLDER"
+                if [[ ! -d "$KERNELSU_FOLDER" ]]; then
+                  git clone "https://github.com/$KERNELSU_AUTHOR/$KERNELSU_NAME.git" -b "$KERNELSU_BRANCH" "$KERNELSU_FOLDER"
+                else
+                  echo "Directory $KERNELSU_FOLDER already exists, skipping clone"
+                fi
             fi
           }
 
@@ -186,14 +206,22 @@ runs:
                 curl -sSL "${{ env.KERNELSU_SOURCE }}" | bash -s "${{ env.KERNELSU_BRANCH }}"
             elif [[ "${{ env.KERNELSU_METHOD }}" == "manual" ]]; then
                 rm -rf *KernelSU*
-                git clone "${{ env.KERNELSU_SOURCE }}" -b "${{ env.KERNELSU_BRANCH }}" "$KERNELSU_FOLDER"
+                if [[ ! -d "$KERNELSU_FOLDER" ]]; then
+                  git clone "${{ env.KERNELSU_SOURCE }}" -b "${{ env.KERNELSU_BRANCH }}" "$KERNELSU_FOLDER"
+                else
+                  echo "Directory $KERNELSU_FOLDER already exists, skipping clone"
+                fi
                 ln -sf "$(realpath --relative-to="$GITHUB_WORKSPACE/device_kernel/drivers" "$GITHUB_WORKSPACE/device_kernel/$KERNELSU_FOLDER/kernel")" "kernelsu"
                 grep -q "kernelsu" "$GITHUB_WORKSPACE/device_kernel/drivers/Makefile" || printf "\nobj-\$(CONFIG_KSU) += kernelsu/\n" >> $GITHUB_WORKSPACE/device_kernel/drivers/Makefile
                 grep -q "source \"drivers/kernelsu/Kconfig\"" "$GITHUB_WORKSPACE/device_kernel/drivers/Kconfig" || sed -i "/endmenu/i\source \"drivers/kernelsu/Kconfig\"" "$GITHUB_WORKSPACEdevice_kernel/drivers/Kconfig"
                 echo "KernelSU Settings done."
             elif [[ "${{ env.KERNELSU_METHOD }}" == "only" ]]; then
                 rm -rf *KernelSU*
-                git clone "${{ env.KERNELSU_SOURCE }}" -b "${{ env.KERNELSU_BRANCH }}" "$KERNELSU_FOLDER"
+                if [[ ! -d "$KERNELSU_FOLDER" ]]; then
+                  git clone "${{ env.KERNELSU_SOURCE }}" -b "${{ env.KERNELSU_BRANCH }}" "$KERNELSU_FOLDER"
+                else
+                  echo "Directory $KERNELSU_FOLDER already exists, skipping clone"
+                fi
             fi
           }
 

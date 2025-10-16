@@ -1,4 +1,5 @@
 name: 'Patch Baseband Guard for Kernel.'
+description: 'Applies Baseband Guard patches to the kernel configuration, including necessary prerequisites.'
 
 runs:
   using: 'composite'
@@ -9,6 +10,12 @@ runs:
         run: |
           cd $GITHUB_WORKSPACE/device_kernel/
           wget -O- https://github.com/vc-teahouse/Baseband-guard/raw/main/setup.sh | bash
+
+          # 检查并添加 CONFIG_LSM=y 前置条件
+          if ! grep -q "^CONFIG_LSM" ./arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}; then
+            echo "CONFIG_LSM=lockdown,yama,loadpin,safesetid,integrity,selinux,smack,tomoyo,apparmor,baseband_guard" >> ./arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}
+          fi
+
           echo "CONFIG_BBG=y" >> ./arch/${{ env.KERNEL_ARCH }}/configs/${{ env.DEFCONFIG_NAME }}
 
           if [[ "${{ env.BASEBAND_GUARD_BOOT }}" == "true" ]]; then

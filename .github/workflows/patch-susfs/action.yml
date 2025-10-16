@@ -12,6 +12,9 @@ runs:
           # Variable
           SUSFS_SOURCE=https://gitlab.com/simonpunk/susfs4ksu.git
           SUSFS_BRANCH=kernel-${{ env.KERNEL_VERSION }}
+          if [ -n "${{ env.SUSFS_VERSION }}" ]; then
+            SUSFS_BRANCH=${{ env.SUSFS_VERSION }}-$SUSFS_BRANCH
+          fi
 
           # Core
           if [[ "${{ env.SUSFS_FIXED }}" == true ]]; then
@@ -22,10 +25,18 @@ runs:
               echo "Please do not set a full URL in PATCH_SOURCE!"
               false
             else
-              git clone https://github.com/${{ env.PATCHES_SOURCE }}.git -b ${{ env.PATCHES_BRANCH }} NonGKI_Kernel_Patches --depth=1 # It's not necessary.
+              if [[ ! -d "NonGKI_Kernel_Patches" ]]; then
+                git clone https://github.com/${{ env.PATCHES_SOURCE }}.git -b ${{ env.PATCHES_BRANCH }} NonGKI_Kernel_Patches --depth=1 # It's not necessary.
+              else
+                echo "Directory NonGKI_Kernel_Patches already exists, skipping clone"
+              fi
             fi
           fi
-          git clone $SUSFS_SOURCE -b $SUSFS_BRANCH susfs4ksu --depth=1
+          if [[ ! -d "susfs4ksu" ]]; then
+            git clone $SUSFS_SOURCE -b $SUSFS_BRANCH susfs4ksu --depth=1
+          else
+            echo "Directory susfs4ksu already exists, skipping clone"
+          fi
 
           # Copy
           cp susfs4ksu/kernel_patches/fs/* fs/
